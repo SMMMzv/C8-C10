@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Economics: Hypothesis Testing Dashboard</title>
+    <!-- Tailwind CSS for Modern UI Design -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Chart.js for rendering the Interactive Normal Curve -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
+
+    <!-- Header Section -->
+    <header class="bg-blue-900 text-white py-6 px-8 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">Hypothesis Testing Digital Tool</h1>
+                <p class="text-sm text-blue-200 mt-1">Grade 11th | Term 3 Learning Evidence 4 (C8-C10)</p>
+            </div>
+            <div class="text-right mt-4 md:mt-0">
+                <span class="bg-blue-800 text-xs font-semibold px-3 py-1.5 rounded-full border border-blue-700">San Bartolomé La Merced</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
+        
+        <!-- Mode Navigation Selector -->
+        <div class="bg-white p-2 rounded-xl shadow-sm border border-gray-200 flex space-x-2 max-w-md mx-auto">
+            <button id="btnManualMode" onclick="switchMode('manual')" class="w-1/2 py-2 text-sm font-medium rounded-lg transition-colors bg-blue-600 text-white shadow-sm">
+                Manual Mode (C8)
+            </button>
+            <button id="btnCsvMode" onclick="switchMode('csv')" class="w-1/2 py-2 text-sm font-medium rounded-lg transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                CSV Automation Mode (C9)
+            </button>
+        </div>
+
+        <!-- MAIN LAYOUT GRID -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- LEFT COLUMN: CONTROLS & INPUT PANELS -->
+            <div class="lg:col-span-1 space-y-6">
+                
+                <!-- GLOBAL CONTROL SETTINGS -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-900 border-b pb-3 mb-4 flex items-center">
+                        <span class="bg-blue-100 text-blue-800 text-xs font-bold mr-2 px-2 py-1 rounded">1</span> Global Settings
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <!-- Test Direction Selector -->
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Alternative Hypothesis Direction (H₁)</label>
+                            <select id="testDirection" onchange="calculateAll()" class="w-full rounded-lg border-gray-300 bg-gray-50 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="two-tailed">Two-Tailed (≠)</option>
+                                <option value="left-tailed">Left-Tailed (&lt;)</option>
+                                <option value="right-tailed">Right-Tailed (&gt;)</option>
+                            </select>
+                        </div>
+
+                        <!-- Significance Level Alpha -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Significance Level (&alpha;)</label>
+                                <input type="number" id="alphaInput" min="0.001" max="0.2" step="0.001" value="0.05" oninput="syncControl('alpha')" class="w-20 text-right text-sm border rounded bg-gray-50 px-1 font-mono">
+                            </div>
+                            <input type="range" id="alphaSlider" min="0.001" max="0.2" step="0.001" value="0.05" oninput="syncControl('alpha')" class="w-full accent-blue-600">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODE A: MANUAL INPUT CONTROLS (C8) -->
+                <div id="panelManual" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex justify-between items-center border-b pb-3 mb-4">
+                        <h2 class="text-lg font-bold text-gray-900 flex items-center">
+                            <span class="bg-blue-100 text-blue-800 text-xs font-bold mr-2 px-2 py-1 rounded">2</span> Parameter Tweaker
+                        </h2>
+                        <select id="manualType" onchange="toggleManualModeFields()" class="text-xs font-semibold border rounded bg-gray-50 p-1 text-gray-600 outline-none">
+                            <option value="mean">Mean Setting Mode</option>
+                            <option value="proportion">Proportion Setting Mode</option>
+                        </select>
+                    </div>
+
+                    <!-- Dynamic Input Parameter Sliders/Boxes -->
+                    <div class="space-y-5">
+                        <!-- Parameter 1: Null/Benchmark Value -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label id="lblParam1" class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Benchmark Mean (&mu;₀)</label>
+                                <input type="number" id="p1Input" value="50" step="any" oninput="syncControl('p1')" class="w-20 text-right text-sm border rounded bg-gray-50 px-1 font-mono">
+                            </div>
+                            <input type="range" id="p1Slider" min="0" max="100" value="50" step="1" oninput="syncControl('p1')" class="w-full accent-blue-600">
+                        </div>
+
+                        <!-- Parameter 2: Sample Statistic -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label id="lblParam2" class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Sample Mean (X̄)</label>
+                                <input type="number" id="p2Input" value="52" step="any" oninput="syncControl('p2')" class="w-20 text-right text-sm border rounded bg-gray-50 px-1 font-mono">
+                            </div>
+                            <input type="range" id="p2Slider" min="0" max="100" value="52" step="1" oninput="syncControl('p2')" class="w-full accent-blue-600">
+                        </div>
+
+                        <!-- Parameter 3: Standard Deviation / Error -->
+                        <div id="divParam3">
+                            <div class="flex justify-between items-center mb-1">
+                                <label id="lblParam3" class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Standard Deviation (&sigma;)</label>
+                                <input type="number" id="p3Input" value="10" min="0.01" step="any" oninput="syncControl('p3')" class="w-20 text-right text-sm border rounded bg-gray-50 px-1 font-mono">
+                            </div>
+                            <input type="range" id="p3Slider" min="1" max="50" value="10" step="0.5" oninput="syncControl('p3')" class="w-full accent-blue-600">
+                        </div>
+
+                        <!-- Parameter 4: Sample Size -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label id="lblParam4" class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Sample Size (n)</label>
+                                <input type="number" id="p4Input" value="35" min="1" step="1" oninput="syncControl('p4')" class="w-20 text-right text-sm border rounded bg-gray-50 px-1 font-mono">
+                            </div>
+                            <input type="range" id="p4Slider" min="5" max="500" value="35" step="1" oninput="syncControl('p4')" class="w-full accent-blue-600">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODE B: CSV AUTOMATION CONTROL PANEL (C9) -->
+                <div id="panelCsv" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hidden">
+                    <h2 class="text-lg font-bold text-gray-900 border-b pb-3 mb-4 flex items-center">
+                        <span class="bg-blue-100 text-blue-800 text-xs font-bold mr-2 px-2 py-1 rounded">2</span> CSV Data Upload
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition cursor-pointer relative">
+                            <input type="file" id="csvFileInput" accept=".csv" onchange="handleCsvUpload()" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                            <svg class="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M24 32V16m0 0l-8 8m8-8l8 8M40 24s-3.111-8-16-8-16 8-16 8 3.111 8 16 8 16-8 16-8z" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <p class="text-xs font-medium text-gray-600 mt-2">Click to select or drag your structured CSV file here</p>
+                        </div>
+
+                        <div id="csvMetaInfo" class="hidden text-xs bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+                            <p class="font-bold text-gray-700">Detected Parsing Columns:</p>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[10px] text-gray-500 font-bold uppercase">Benchmark Group (G1)</label>
+                                    <select id="csvGroup1Sel" onchange="processCsvCalculations()" class="w-full border rounded p-1 bg-white"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-gray-500 font-bold uppercase">Test Group (G2)</label>
+                                    <select id="csvGroup2Sel" onchange="processCsvCalculations()" class="w-full border rounded p-1 bg-white"></select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: INTERACTIVE VISUALIZATION & OUTPUT INTERPRETATION -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- INTERACTIVE PLOT AREA -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-900 border-b pb-3 mb-4">Interactive Statistical Standard Normal Curve</h2>
+                    <div class="relative w-full h-72 md:h-96">
+                        <canvas id="normalCurveChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- DETAILED OUTPUT REPORT PANEL -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <!-- Numeric Indicators -->
+                    <div class="md:col-span-1 border-r border-gray-100 pr-2 space-y-4">
+                        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider">Metrics Panel</h3>
+                        
+                        <div>
+                            <span class="text-xs font-medium text-gray-500 block">Calculated Test Statistic (z)</span>
+                            <span id="outZ" class="text-2xl font-mono font-bold text-gray-900">0.000</span>
+                        </div>
+                        <div>
+                            <span class="text-xs font-medium text-gray-500 block">Computed Probability (p-value)</span>
+                            <span id="outP" class="text-2xl font-mono font-bold text-blue-600">0.0000</span>
+                        </div>
+                        <div>
+                            <span class="text-xs font-medium text-gray-500 block">Critical Threshold Limit</span>
+                            <span id="outCrit" class="text-sm font-mono font-semibold text-gray-700">±1.960</span>
+                        </div>
+                    </div>
+
+                    <!-- Hypothesis Testing Conclusions -->
+                    <div class="md:col-span-2 space-y-4 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Automated Statistical Statement</h3>
+                            <div id="decisionBadge" class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase mb-2 bg-gray-100 text-gray-800">
+                                Evaluating...
+                            </div>
+                            <p id="decisionText" class="text-sm text-gray-600 leading-relaxed font-medium">
+                                Awaiting variables calculation to construct the critical evaluation profile.
+                            </p>
+                        </div>
+
+                        <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 text-xs text-amber-900">
+                            <span class="font-bold block uppercase tracking-wide mb-1">Operational Error Boundary Framework:</span>
+                            <span id="errorFrameworkText">If H₀ is true, rejecting it creates a Type I error (&alpha;). If false, failing to reject creates a Type II error (&beta;).</span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- CORE REUSABLE LOGIC FRAMEWORK ENGINE -->
+    <script>
+        let currentMode = 'manual'; // 'manual' or 'csv'
+        let chartInstance = null;
+        let globalCsvData = null;
+
+        // Matrix structure tracking system parameters
+        let params = { alpha: 0.05, p1: 50, p2: 52, p3: 10, p4: 35 };
+
+        window.onload = function() {
+            initChart();
+            toggleManualModeFields();
+        };
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('btnManualMode').className = mode === 'manual' ? "w-1/2 py-2 text-sm font-medium rounded-lg transition-colors bg-blue-600 text-white shadow-sm" : "w-1/2 py-2 text-sm font-medium rounded-lg transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-100";
+            document.getElementById('btnCsvMode').className = mode === 'csv' ? "w-1/2 py-2 text-sm font-medium rounded-lg transition-colors bg-blue-600 text-white shadow-sm" : "w-1/2 py-2 text-sm font-medium rounded-lg transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-100";
+            
+            document.getElementById('panelManual').classList.toggle('hidden', mode !== 'manual');
+            document.getElementById('panelCsv').classList.toggle('hidden', mode !== 'csv');
+            calculateAll();
+        }
+
+        function toggleManualModeFields() {
+            const type = document.getElementById('manualType').value;
+            if(type === 'mean') {
+                setupParamField('p1', "Benchmark Mean (&mu;₀)", 0, 100, 50, 1);
+                setupParamField('p2', "Sample Mean (X̄)", 0, 100, 52, 1);
+                document.getElementById('divParam3').style.display = 'block';
+                setupParamField('p3', "Standard Deviation (&sigma;)", 0.1, 50, 10, 0.1);
+                setupParamField('p4', "Sample Size (n)", 2, 500, 35, 1);
+            } else {
+                setupParamField('p1', "Benchmark Prop (p₀)", 0, 1, 0.5, 0.01);
+                setupParamField('p2', "Sample Prop (p̂)", 0, 1, 0.58, 0.01);
+                document.getElementById('divParam3').style.display = 'none';
+                setupParamField('p4', "Sample Size (n)", 5, 1000, 100, 1);
+            }
+            calculateAll();
+        }
+
+        function setupParamField(id, label, min, max, val, step) {
+            document.getElementById('lblParam' + id.charAt(1)).innerHTML = label;
+            const input = document.getElementById(id + 'Input');
+            const slider = document.getElementById(id + 'Slider');
+            input.min = min; input.max = max; input.step = step; input.value = val;
+            slider.min = min; slider.max = max; slider.step = step; slider.value = val;
+            params[id] = val;
+        }
+
+        function syncControl(key) {
+            const input = document.getElementById(key + 'Input');
+            const slider = document.getElementById(key + 'Slider');
+            if (event.target.type === 'range') {
+                input.value = slider.value;
+            } else {
+                slider.value = input.value;
+            }
+            params[key] = parseFloat(input.value);
+            calculateAll();
+        }
+
+        // Mathematical Processing Infrastructure Engine
+        function calculateAll() {
+            let z = 0, alpha = params.alpha, pValue = 0;
+            const dir = document.getElementById('testDirection').value;
+
+            if (currentMode === 'manual') {
+                const type = document.getElementById('manualType').value;
+                if(type === 'mean') {
+                    let se = params.p3 / Math.sqrt(params.p4);
+                    z = se === 0 ? 0 : (params.p2 - params.p1) / se;
+                } else {
+                    let se = Math.sqrt((params.p1 * (1 - params.p1)) / params.p4);
+                    z = se === 0 ? 0 : (params.p2 - params.p1) / se;
+                }
+            } else {
+                z = window.calculatedCsvZ || 0;
+            }
+
+            if(isNaN(z) || !isFinite(z)) z = 0;
+
+            // Compute standard Gaussian dynamic tail probabilities
+            let pOneTailed = normcdf(-Math.abs(z));
+            if (dir === 'two-tailed') {
+                pValue = 2 * pOneTailed;
+            } else if (dir === 'left-tailed') {
+                pValue = normcdf(z);
+            } else {
+                pValue = 1 - normcdf(z);
+            }
+
+            let critZText = "", isReject = false;
+            if (dir === 'two-tailed') {
+                let crit = Math.abs(norminv(alpha / 2));
+                critZText = `&plusmn;${crit.toFixed(3)}`;
+                isReject = Math.abs(z) >= crit;
+            } else if (dir === 'left-tailed') {
+                let crit = norminv(alpha);
+                critZText = `${crit.toFixed(3)}`;
+                isReject = z <= crit;
+            } else {
+                let crit = norminv(1 - alpha);
+                critZText = `+${crit.toFixed(3)}`;
+                isReject = z >= crit;
+            }
+
+            updateUIOutputs(z, pValue, critZText, isReject, alpha);
+            updateChartVisuals(z, alpha, dir);
+        }
+
+        function updateUIOutputs(z, p, crit, isReject, alpha) {
+            document.getElementById('outZ').innerText = z.toFixed(3);
+            document.getElementById('outP').innerText = p.toFixed(4);
+            document.getElementById('outCrit').innerHTML = crit;
+
+            const badge = document.getElementById('decisionBadge');
+            const text = document.getElementById('decisionText');
+            const errBox = document.getElementById('errorFrameworkText');
+
+            if(isReject) {
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase mb-2 bg-red-100 text-red-800";
+                badge.innerText = "Reject H₀ (Statistically Significant)";
+                text.innerText = `Since the calculated p-value (${p.toFixed(4)}) is strictly less than or equal to the significance threshold &alpha; (${alpha}), we find sufficient objective empirical evidence to reject the null hypothesis. The observed divergence is highly unlikely to be the result of random sampling variation.`;
+                errBox.innerHTML = `<strong>Type I Error Risk Active:</strong> Because we rejected H₀, we run a risk of committing a <strong>Type I error</strong> (falsely concluding an effect exists when it doesn't). The concrete probability of this mistake is exactly &alpha; = ${(alpha*100).toFixed(1)}%.`;
+            } else {
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase mb-2 bg-emerald-100 text-emerald-800";
+                badge.innerText = "Fail to Reject H₀ (Not Significant)";
+                text.innerText = `Since the calculated p-value (${p.toFixed(4)}) is greater than the significance threshold &alpha; (${alpha}), we lack sufficient mathematical proof to reject the null hypothesis. The variations can be safe interpreted as random sampling fluctuations.`;
+                errBox.innerHTML = `<strong>Type II Error Risk Active:</strong> Because we failed to reject H₀, we run a risk of committing a <strong>Type II error</strong> (missing a real-world effect or difference). The risk probability (&beta;) is inversely related to sample size and effect size.`;
+            }
+        }
+
+        // CSV parsing structure engine
+        function handleCsvUpload() {
+            const fileInput = document.getElementById('csvFileInput');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parseAndProcessCsv(text);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseAndProcessCsv(text) {
+            const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            if(lines.length < 2) return alert("Malformed CSV database detected.");
+
+            const headers = lines[0].split(',').map(h => h.trim().replace(/['"]+/g, ''));
+            let dataRows = [];
+
+            for(let i=1; i<lines.length; i++) {
+                let cols = lines[i].split(',').map(c => c.trim().replace(/['"]+/g, ''));
+                if(cols.length === headers.length) dataRows.push(cols);
+            }
+
+            globalCsvData = { headers, rows: dataRows };
+
+            // Dynamically populate group selectors
+            const s1 = document.getElementById('csvGroup1Sel');
+            const s2 = document.getElementById('csvGroup2Sel');
+            s1.innerHTML = ''; s2.innerHTML = '';
+
+            headers.forEach((h, idx) => {
+                s1.options[s1.options.length] = new Option(h, idx);
+                s2.options[s2.options.length] = new Option(h, idx);
+            });
+
+            if(headers.length > 1) s2.selectedIndex = 1;
+
+            document.getElementById('csvMetaInfo').classList.remove('hidden');
+            processCsvCalculations();
+        }
+
+        function processCsvCalculations() {
+            if (!globalCsvData) return;
+            const idx1 = parseInt(document.getElementById('csvGroup1Sel').value);
+            const idx2 = parseInt(document.getElementById('csvGroup2Sel').value);
+
+            let g1Raw = globalCsvData.rows.map(r => parseFloat(r[idx1])).filter(v => !isNaN(v));
+            let g2Raw = globalCsvData.rows.map(r => parseFloat(r[idx2])).filter(v => !isNaN(v));
+
+            // Check if binary datasets (Proportion-based)
+            let isG1Binary = g1Raw.every(v => v === 0 || v === 1);
+            let isG2Binary = g2Raw.every(v => v === 0 || v === 1);
+
+            if(isG1Binary && isG2Binary && g1Raw.length > 0) {
+                // Two-proportion z-test execution
+                let x1 = g1Raw.reduce((a,b)=>a+b, 0), n1 = g1Raw.length;
+                let x2 = g2Raw.reduce((a,b)=>a+b, 0), n2 = g2Raw.length;
+                let p1 = x1/n1, p2 = x2/n2;
+                let pc = (x1 + x2) / (n1 + n2);
+                let se = Math.sqrt(pc * (1 - pc) * (1/n1 + 1/n2));
+                window.calculatedCsvZ = se === 0 ? 0 : (p2 - p1) / se;
+            } else {
+                // Two-sample independent means z-test execution
+                let m1 = mean(g1Raw), m2 = mean(g2Raw);
+                let v1 = variance(g1Raw), v2 = variance(g2Raw);
+                let n1 = g1Raw.length, n2 = g2Raw.length;
+                let se = Math.sqrt((v1/n1) + (v2/n2));
+                window.calculatedCsvZ = se === 0 ? 0 : (m2 - m1) / se;
+            }
+
+            calculateAll();
+        }
+
+        // Statistical Math Helper Functions
+        function mean(arr) { return arr.reduce((a,b)=>a+b,0)/arr.length; }
+        function variance(arr) {
+            let m = mean(arr);
+            return arr.reduce((a,b)=>a+Math.pow(b-m,2),0)/(arr.length - 1 || 1);
+        }
+        function normcdf(z) {
+            let t = 1 / (1 + 0.2316419 * Math.abs(z));
+            let d = 0.3989423 * Math.exp(-z * z / 2);
+            let p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+            return z >= 0 ? 1 - p : p;
+        }
+        function norminv(p) {
+            let a1 = -39.696830, a2 = 220.946098, a3 = -275.928510, a4 = 138.357751, a5 = -30.664798, a6 = 2.506628;
+            let b1 = -54.476098, b2 = 161.585836, b3 = -155.698979, b4 = 66.801311, b5 = -13.280681;
+            let c1 = -0.0077848, c2 = -0.322396, c3 = -2.400758, c4 = -2.549732, c5 = 4.374664, c6 = 2.938163;
+            let d1 = 0.0077846, d2 = 0.322467, d3 = 2.445134, d4 = 3.754408;
+            let q, r;
+            if (p <= 0 || p >= 1) return 0;
+            if (p < 0.02425) {
+                q = Math.sqrt(-2 * Math.log(p));
+                return (((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) / ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
+            }
+            if (p > 0.97575) {
+                q = Math.sqrt(-2 * Math.log(1 - p));
+                return -(((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) / ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
+            }
+            q = p - 0.5; r = q * q;
+            return (((((a1 * r + a2) * r + a3) * r + a4) * r + a5) * r + a6) * q / (((((b1 * r + b2) * r + b3) * r + b4) * r + b5) * r + 1);
+        }
+
+        // Chart.js Visualization Engine Mapping Infrastructure
+        function initChart() {
+            const ctx = document.getElementById('normalCurveChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { datasets: [
+                    { label: 'Normal Curve', data: [], borderColor: '#1e3a8a', borderWidth: 2, pointRadius: 0, fill: false },
+                    { label: 'p-value region', data: [], backgroundColor: 'rgba(59, 130, 246, 0.4)', pointRadius: 0, fill: 'origin' },
+                    { label: 'Critical Region', data: [], backgroundColor: 'rgba(239, 68, 68, 0.2)', pointRadius: 0, fill: 'origin' },
+                    { label: 'Observed Z', data: [], borderColor: '#ef4444', borderWidth: 2, borderDash: [4, 4], pointRadius: 0, fill: false }
+                ]},
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { type: 'linear', min: -4, max: 4, title: { display: true, text: 'Standard Deviations (z)' } },
+                        y: { display: false }
+                    },
+                    plugins: { legend: { labels: { boxWidth: 12, font: { size: 11 } } } }
+                }
+            });
+        }
+
+        function updateChartVisuals(zScore, alpha, direction) {
+            let curveData = [], pRegionData = [], critRegionData = [];
+            let steps = 160;
+            
+            let critL = direction === 'two-tailed' ? norminv(alpha/2) : (direction === 'left-tailed' ? norminv(alpha) : -99);
+            let critR = direction === 'two-tailed' ? norminv(1 - alpha/2) : (direction === 'right-tailed' ? norminv(1 - alpha) : 99);
+
+            for (let i = 0; i <= steps; i++) {
+                let x = -4 + (i / steps) * 8;
+                let y = (1 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * x * x);
+                
+                curveData.push({ x: x, y: y });
+
+                // Shade alpha critical bounding structures
+                if ((direction === 'two-tailed' && (x <= critL || x >= critR)) || 
+                    (direction === 'left-tailed' && x <= critL) || 
+                    (direction === 'right-tailed' && x >= critR)) {
+                    critRegionData.push({ x: x, y: y });
+                } else {
+                    critRegionData.push({ x: x, y: 0 });
+                }
+
+                // Shade dynamic calculated p-value spaces
+                let absZ = Math.abs(zScore);
+                if (direction === 'two-tailed' && (x <= -absZ || x >= absZ)) {
+                    pRegionData.push({ x: x, y: y });
+                } else if (direction === 'left-tailed' && x <= zScore) {
+                    pRegionData.push({ x: x, y: y });
+                } else if (direction === 'right-tailed' && x >= zScore) {
+                    pRegionData.push({ x: x, y: y });
+                } else {
+                    pRegionData.push({ x: x, y: 0 });
+                }
+            }
+
+            chartInstance.data.datasets[0].data = curveData;
+            chartInstance.data.datasets[1].data = pRegionData;
+            chartInstance.data.datasets[2].data = critRegionData;
+            
+            // Draw a clear vertical layout tracking calculated observed Z-statistic marker
+            chartInstance.data.datasets[3].data = [{ x: zScore, y: 0 }, { x: zScore, y: 0.4 }];
+            chartInstance.update();
+        }
+    </script>
+</body>
+</html>
